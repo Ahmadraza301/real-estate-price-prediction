@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Tests - Bangalore Home Price Prediction</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .test-pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-summary {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Frontend Tests for House Price Prediction</h1>
+    
+    <div class="test-container">
+        <h2>Test Controls</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div class="test-container">
+        <h2>Form Validation Tests</h2>
+        <div id="validation-tests"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>API Communication Tests</h2>
+        <div id="api-tests"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>UI State Management Tests</h2>
+        <div id="ui-tests"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test Summary</h2>
+        <div id="test-summary"></div>
+    </div>
+
+    <!-- Hidden form elements for testing -->
+    <div style="display: none;">
+        <input type="number" id="uiSqft" value="1000">
+        <input type="radio" name="uiBHK" value="1">
+        <input type="radio" name="uiBHK" value="2" checked>
+        <input type="radio" name="uiBHK" value="3">
+        <input type="radio" name="uiBathrooms" value="1">
+        <input type="radio" name="uiBathrooms" value="2" checked>
+        <input type="radio" name="uiBathrooms" value="3">
+        <select id="uiLocations">
+            <option value="">Choose a Location</option>
+            <option value="electronic city">Electronic City</option>
+            <option value="whitefield">Whitefield</option>
+        </select>
+        <div id="uiEstimatedPrice"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+        
+        function addTestResult(testName, passed, message) {
+            testResults.push({name: testName, passed: passed, message: message});
+            const resultDiv = document.createElement('div');
+            resultDiv.className = passed ? 'test-result test-pass' : 'test-result test-fail';
+            resultDiv.innerHTML = `<strong>${testName}:</strong> ${passed ? 'PASS' : 'FAIL'} - ${message}`;
+            return resultDiv;
+        }
+        
+        function clearResults() {
+            testResults = [];
+            document.getElementById('validation-tests').innerHTML = '';
+            document.getElementById('api-tests').innerHTML = '';
+            document.getElementById('ui-tests').innerHTML = '';
+            document.getElementById('test-summary').innerHTML = '';
+        }
+        
+        function updateSummary() {
+            const total = testResults.length;
+            const passed = testResults.filter(r => r.passed).length;
+            const failed = total - passed;
+            
+            const summaryDiv = document.getElementById('test-summary');
+            summaryDiv.innerHTML = `
+                <div class="test-summary">
+                    Total Tests: ${total} | Passed: ${passed} | Failed: ${failed}
+                    ${failed === 0 ? '<span style="color: green;">✓ All tests passed!</span>' : '<span style="color: red;">✗ Some tests failed</span>'}
+                </div>
+            `;
+        }
+        
+        function testGetBHKValue() {
+            const container = document.getElementById('validation-tests');
+            
+            // Test with default selection (2 BHK)
+            const bhk = getBHKValue();
+            const result = addTestResult(
+                'getBHKValue() - Default Selection',
+                bhk === 2,
+                `Expected 2, got ${bhk}`
+            );
+            container.appendChild(result);
+        }
+        
+        function testGetBathValue() {
+            const container = document.getElementById('validation-tests');
+            
+            // Test with default selection (2 bathrooms)
+            const bath = getBathValue();
+            const result = addTestResult(
+                'getBathValue() - Default Selection',
+                bath === 2,
+                `Expected 2, got ${bath}`
+            );
+            container.appendChild(result);
+        }
+        
+        function testValidateInputs() {
+            const container = document.getElementById('validation-tests');
+            
+            // Test valid inputs
+            const validResult = validateInputs(1000, 2, 2, 'electronic city');
+            let result = addTestResult(
+                'validateInputs() - Valid Inputs',
+                validResult === true,
+                `Expected true, got ${validResult}`
+            );
+            container.appendChild(result);
+            
+            // Test invalid area
+            const invalidAreaResult = validateInputs(0, 2, 2, 'electronic city');
+            result = addTestResult(
+                'validateInputs() - Invalid Area',
+                invalidAreaResult === false,
+                `Expected false for zero area, got ${invalidAreaResult}`
+            );
+            container.appendChild(result);
+            
+            // Test invalid BHK
+            const invalidBHKResult = validateInputs(1000, -1, 2, 'electronic city');
+            result = addTestResult(
+                'validateInputs() - Invalid BHK',
+                invalidBHKResult === false,
+                `Expected false for invalid BHK, got ${invalidBHKResult}`
+            );
+            container.appendChild(result);
+            
+            // Test empty location
+            const invalidLocationResult = validateInputs(1000, 2, 2, '');
+            result = addTestResult(
+                'validateInputs() - Empty Location',
+                invalidLocationResult === false,
+                `Expected false for empty location, got ${invalidLocationResult}`
+            );
+            container.appendChild(result);
+        }
+        
+        function testShowResult() {
+            const container = document.getElementById('ui-tests');
+            
+            // Test showing result
+            showResult(150.5);
+            const resultElement = document.getElementById('uiEstimatedPrice');
+            const hasCorrectText = resultElement.innerHTML.includes('150.5');
+            const hasCorrectColor = resultElement.style.backgroundColor === 'rgb(220, 214, 134)';
+            
+            const result = addTestResult(
+                'showResult() - Display Price',
+                hasCorrectText,
+                `Result element should contain price. Content: ${resultElement.innerHTML}`
+            );
+            container.appendChild(result);
+        }
+        
+        function testShowError() {
+            const container = document.getElementById('ui-tests');
+            
+            // Test showing error
+            showError('Test error message');
+            const resultElement = document.getElementById('uiEstimatedPrice');
+            const hasErrorText = resultElement.innerHTML.includes('Test error message');
+            
+            const result = addTestResult(
+                'showError() - Display Error',
+                hasErrorText,
+                `Result element should contain error message. Content: ${resultElement.innerHTML}`
+            );
+            container.appendChild(result);
+        }
+        
+        function testShowLoading() {
+            const container = document.getElementById('ui-tests');
+            
+            // Test showing loading state
+            showLoading();
+            const resultElement = document.getElementById('uiEstimatedPrice');
+            const hasLoadingText = resultElement.innerHTML.includes('Calculating');
+            
+            const result = addTestResult(
+                'showLoading() - Display Loading',
+                hasLoadingText,
+                `Result element should show loading state. Content: ${resultElement.innerHTML}`
+            );
+            container.appendChild(result);
+        }
+        
+        function testAPIEndpoints() {
+            const container = document.getElementById('api-tests');
+            
+            // Test get locations API
+            $.get('/get_location_names')
+            .done(function(data) {
+                const hasLocations = data && data.locations && Array.isArray(data.locations);
+                const result = addTestResult(
+                    'API - Get Locations',
+                    hasLocations,
+                    hasLocations ? `Received ${data.locations.length} locations` : 'Failed to get locations'
+                );
+                container.appendChild(result);
+                updateSummary();
+            })
+            .fail(function() {
+                const result = addTestResult(
+                    'API - Get Locations',
+                    false,
+                    'API call failed'
+                );
+                container.appendChild(result);
+                updateSummary();
+            });
+            
+            // Test prediction API
+            $.post('/predict_home_price', {
+                total_sqft: 1000,
+                bhk: 2,
+                bath: 2,
+                location: 'electronic city'
+            })
+            .done(function(data) {
+                const hasPrice = data && typeof data.estimated_price === 'number';
+                const result = addTestResult(
+                    'API - Predict Price',
+                    hasPrice,
+                    hasPrice ? `Received price: ${data.estimated_price}` : 'Invalid response format'
+                );
+                container.appendChild(result);
+                updateSummary();
+            })
+            .fail(function() {
+                const result = addTestResult(
+                    'API - Predict Price',
+                    false,
+                    'API call failed'
+                );
+                container.appendChild(result);
+                updateSummary();
+            });
+        }
+        
+        function runAllTests() {
+            clearResults();
+            
+            // Run synchronous tests
+            testGetBHKValue();
+            testGetBathValue();
+            testValidateInputs();
+            testShowResult();
+            testShowError();
+            testShowLoading();
+            
+            // Run asynchronous API tests
+            testAPIEndpoints();
+            
+            // Update summary (will be updated again after API tests complete)
+            setTimeout(updateSummary, 100);
+        }
+        
+        // Run tests on page load
+        window.onload = function() {
+            console.log('Frontend test page loaded');
+        };
+    </script>
+</body>
+</html>
